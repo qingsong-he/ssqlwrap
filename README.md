@@ -1,5 +1,4 @@
 # ssqlwrap
-simple wrap sql query and exec function by cache reflection
 
 ### usage
 
