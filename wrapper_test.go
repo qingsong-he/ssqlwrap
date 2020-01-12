@@ -1,9 +1,5 @@
-# ssqlwrap
-simple wrap sql query and exec function by cache reflection
+package ssqlwrap
 
-### usage
-
-```
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -163,5 +159,3 @@ func TestExecByTX(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-```
