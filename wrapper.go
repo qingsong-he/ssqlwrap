@@ -10,6 +10,12 @@ import (
 	"sync"
 )
 
+var rawBytesPool = sync.Pool{
+	New: func() interface{} {
+		return new(sql.RawBytes)
+	},
+}
+
 type cacheTypeInfo struct {
 	elemByType reflect.Type
 	fieldNames map[string]interface{}
@@ -136,7 +142,9 @@ func Query(dbHandle interface{}, objectModel interface{}, q string, args ...inte
 		if _, ok := fieldNames[v.Name()]; ok {
 			rowTypes = append(rowTypes, fieldNames[v.Name()])
 		} else {
-			rowTypes = append(rowTypes, new(sql.RawBytes))
+			rawBytes := rawBytesPool.Get().(*sql.RawBytes)
+			defer rawBytesPool.Put(rawBytes)
+			rowTypes = append(rowTypes, rawBytes)
 		}
 	}
 

@@ -50,7 +50,6 @@ func TestQuery(t *testing.T) {
 
 	type om struct {
 		C7 string `sql:"c7"`
-		C99 string
 	}
 	result := new([]om)
 	err = Query(db, result, "select * from t1 where c1 = 1")
