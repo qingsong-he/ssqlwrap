@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"testing"
-	"time"
 )
 
 func init() {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/?multiStatements=true")
+	db, err := sql.Open("mysql", "debian-sys-maint:FeqsrRhqD0yn7thg@tcp(localhost:3306)/?multiStatements=true")
 	if err != nil {
 		panic(err)
 	}
@@ -31,14 +30,14 @@ insert into t1 values(1, 2.2, 3.3, 'hello world', 23.43, '1988-09-09', 'hello wo
 insert into t1 values(2, 4.4, 5.5, 'foo bar', 45.65, '1988-10-09', 'foo bar');
 insert into t1(c7) values('...');
 `
-	err = Exec(db, initSql)
+	_, err = db.Exec(initSql)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func TestQuery(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/d1")
+	db, err := sql.Open("mysql", "debian-sys-maint:FeqsrRhqD0yn7thg@tcp(localhost:3306)/d1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,6 +50,7 @@ func TestQuery(t *testing.T) {
 
 	type om struct {
 		C7 string `sql:"c7"`
+		C99 string
 	}
 	result := new([]om)
 	err = Query(db, result, "select * from t1 where c1 = 1")
@@ -70,7 +70,7 @@ func TestQuery(t *testing.T) {
 }
 
 func TestQueryByTX(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/d1")
+	db, err := sql.Open("mysql", "debian-sys-maint:FeqsrRhqD0yn7thg@tcp(localhost:3306)/d1")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestQueryByTX(t *testing.T) {
 		C1 int `sql:"c1"`
 	}
 	result := new([]om)
-	err = QueryByTX(tx, result, "select * from t1")
+	err = Query(tx, result, "select * from t1")
 	if err != nil {
 		{
 			err := tx.Rollback()
@@ -107,55 +107,4 @@ func TestQueryByTX(t *testing.T) {
 	}
 
 	t.Log(*result)
-}
-
-func TestExec(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/d1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = Exec(db, "delete from t1")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestExecByTX(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/d1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = ExecByTX(tx, "insert into t1(c7) values(?)", time.Now().String())
-	if err != nil {
-		{
-			err := tx.Rollback()
-			if err != nil {
-				t.Log(err)
-			}
-		}
-		t.Fatal(err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		t.Fatal(err)
-	}
 }
