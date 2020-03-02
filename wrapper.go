@@ -10,6 +10,12 @@ import (
 	"sync"
 )
 
+var chanByEmptyStructPool = sync.Pool{
+	New: func() interface{} {
+		return make(chan struct{})
+	},
+}
+
 var rawBytesPool = sync.Pool{
 	New: func() interface{} {
 		return new(sql.RawBytes)
@@ -77,9 +83,11 @@ func Query(dbHandle interface{}, objectModel interface{}, q string, args ...inte
 		return NoFeildStructErr
 	}
 
+	ch := chanByEmptyStructPool.Get().(chan struct{})
+
 	// cache type info
 	typeMark := elemByType.PkgPath() + "." + elemByType.Name()
-	cacheTypeInfoInst, has := cacheMap.LoadOrStore(typeMark, &cacheTypeInfo{elemByType: elemByType, ch: make(chan struct{})})
+	cacheTypeInfoInst, has := cacheMap.LoadOrStore(typeMark, &cacheTypeInfo{elemByType: elemByType, ch: ch})
 	real := cacheTypeInfoInst.(*cacheTypeInfo)
 	if !has {
 		fieldNames := make(map[string]interface{})
@@ -108,6 +116,7 @@ func Query(dbHandle interface{}, objectModel interface{}, q string, args ...inte
 		real.fieldNames = fieldNames
 		close(real.ch)
 	} else {
+		chanByEmptyStructPool.Put(ch)
 		<-real.ch
 
 		// check 'cacheMap' again
